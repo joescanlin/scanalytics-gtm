@@ -1,0 +1,33 @@
+# Subdomain landing pages (separate repos/deployments)
+PT-page/
+SeniorLivingOP/
+fm-page/
+healthcaresd/
+sportsperformance-page/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Environment files with secrets
+.env.local
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
