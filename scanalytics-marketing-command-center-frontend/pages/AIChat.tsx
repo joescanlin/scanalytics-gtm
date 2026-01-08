@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, MessageSquare, Plus, ChevronLeft, ChevronRight, Info, Loader2 } from 'lucide-react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from 'openai';
 import { SEGMENTS, UNIVERSAL_MESSAGE_PILLARS, UNIVERSAL_PROOF_POINTS } from '../constants';
 
 const SUGGESTED_PROMPTS = [
@@ -75,32 +75,32 @@ const AIChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'your_openai_api_key_here') {
         throw new Error('API key not configured');
       }
       
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        systemInstruction: getSystemInstruction(context),
+      const openai = new OpenAI({
+        apiKey,
+        dangerouslyAllowBrowser: true
       });
       
       const chatHistory = messages.map(m => ({
-        role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
-        parts: [{ text: m.content }]
+        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: m.content
       }));
 
-      const chat = model.startChat({
-        history: chatHistory,
-        generationConfig: {
-          temperature: 0.7,
-        },
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: getSystemInstruction(context) },
+          ...chatHistory,
+          { role: 'user', content: userText }
+        ],
+        temperature: 0.7,
       });
 
-      const result = await chat.sendMessage(userText);
-      const response = await result.response;
-      const botResponse = response.text() || "I apologize, I'm unable to process that request right now. Please try again.";
+      const botResponse = response.choices[0]?.message?.content || "I apologize, I'm unable to process that request right now. Please try again.";
       setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);
     } catch (error) {
       console.error("AI Communication Error:", error);
